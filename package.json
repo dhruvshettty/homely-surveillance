@@ -1,0 +1,31 @@
+{
+  "name": "homely-surveillance",
+  "version": "1.0.0",
+  "description": "Home surveillance from entry to outdoor security",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dhruvshettty/homely-surveillance.git"
+  },
+  "keywords": [
+    "home",
+    "security",
+    "indoor",
+    "outdoor",
+    "doorbell"
+  ],
+  "author": "Dhruv Shetty",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dhruvshettty/homely-surveillance/issues"
+  },
+  "homepage": "https://github.com/dhruvshettty/homely-surveillance#readme",
+  "dependencies": {
+    "ejs": "^3.1.6",
+    "express": "^4.17.1",
+    "mongoose": "^5.12.4"
+  }
+}
