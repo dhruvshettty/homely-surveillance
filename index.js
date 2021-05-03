@@ -6,7 +6,8 @@ const path = require('path');
 const passport = require('passport');
 const PassportLocalStrategy = require('passport-local');
 const session = require('express-session');
-const { isLoggedIn } = require('./middleware');
+const ExpressError = require('./util/ExpressError');
+const { isLoggedIn } = require('./middlewares/isLoggedIn');
 const User = require('./models/user');
 const userRoutes = require('./routes/users');
 
@@ -38,8 +39,8 @@ const sessionConfig = {
     saveUninitialized: true,
     cookie: {
         httpOnly: true,
-        expires: Date.now() + 1000 * 60 * 60 * 24 * 7,
-        maxAge: 1000 * 60 * 60 * 24 * 7,
+        expires: Date.now() + (1000 * 60 * 60 * 24 * 7),
+        maxAge: (1000 * 60 * 60 * 24 * 7),
     },
 };
 app.use(session(sessionConfig));
@@ -59,7 +60,7 @@ app.use((req, res, next) => {
 
 app.use('/', userRoutes);
 
-app.get('/home', (req, res) => {
+app.get('/', (req, res) => {
     res.render('home');
 });
 
@@ -67,8 +68,14 @@ app.get('/secret', isLoggedIn, (req, res) => {
     res.send('You should see this only if you are logged in');
 });
 
-app.use((req, res) => {
-    res.status(404).send('Page not found');
+app.all('*', (req, res, next) => {
+    next(new ExpressError('Page not found', 400));
+});
+
+app.use((err, req, res, next) => {
+    if (!err.statusCode) err.statusCode = 500;
+    if (!err.message) err.message = 'Oh no, something went wrong :(';
+    res.status(err.statusCode).render('error', { err });
 });
 
 app.listen(3000, () => {
