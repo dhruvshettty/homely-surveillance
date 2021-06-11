@@ -10,6 +10,7 @@ const ExpressError = require('./util/ExpressError');
 const { isLoggedIn } = require('./middlewares/isLoggedIn');
 const User = require('./models/user');
 const userRoutes = require('./routes/users');
+const verificationRoutes = require('./routes/verification');
 
 // Mongoose congifuration
 mongoose.connect('mongodb://localhost:27017/homely', {
@@ -63,6 +64,8 @@ app.use('/', userRoutes);
 app.get('/', (req, res) => {
     res.render('home');
 });
+
+app.use('/verification', verificationRoutes);
 
 app.all('*', (req, res, next) => {
     next(new ExpressError('Page not found', 400));
