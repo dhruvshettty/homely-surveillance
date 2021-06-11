@@ -30,7 +30,7 @@ app.engine('ejs', ejsMate);
 app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: true }));
 app.set('views', path.join(__dirname, 'views'));
-app.use('/static', express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 
 // Session configuration
 const sessionConfig = {
@@ -62,10 +62,6 @@ app.use('/', userRoutes);
 
 app.get('/', (req, res) => {
     res.render('home');
-});
-
-app.get('/secret', isLoggedIn, (req, res) => {
-    res.send('You should see this only if you are logged in');
 });
 
 app.all('*', (req, res, next) => {
