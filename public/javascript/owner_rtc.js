@@ -4,6 +4,7 @@
  * @fileoverview Code for a WebRTC connection with a remote user (home-owner)
  * and the guest (unrecognized face) present at the door of the house.
  */
+import adapter from 'webrtc-adapter';
 
 let localStream;
 let remoteStream;
