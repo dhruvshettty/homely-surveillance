@@ -1,16 +1,23 @@
 /**
  * Copyright (c) Dhruv Shetty.
  *
- * @fileoverview Code for a WebRTC connection with a remote user (home-owner)
- * and the guest (unrecognized face) present at the door of the house.
+ * @fileoverview WebRTC connection with a remote user (home-owner) and the guest
+ * (unrecognized face) present at the door of the house through Socket.io
  */
-import adapter from 'webrtc-adapter';
 
+// import adapter from 'webrtc-adapter';
+
+// Global scope variables
 let localStream;
 let remoteStream;
-
 let localPeerConnection;
-let remotePeerConnection;
+
+// Socket.io config
+const room = 'foo';
+const socket = io();
+let isInitiator = false;
+let isChannelReady = false;
+let isStarted = false;
 
 // Video: HD, Audio: default
 const mediaStreamConstraints = {
@@ -23,42 +30,73 @@ const mediaStreamConstraints = {
     audio: true,
 };
 
-// Exchange video only
+// Options for media exchange through peer connection
 const offerOptions = {
-    offerToReceiveVideo: 1,
+    offerToReceiveVideo: true,
+    offerToReceiveAudio: true,
 };
 
 const status = document.querySelector('#status');
 const localVideo = document.querySelector('#localVideo');
 const remoteVideo = document.querySelector('#remoteVideo');
 
-// ----------------
-// Helper functions
-// ----------------
-
-// Gets the "other" peer connection.
-function getOtherPeer(peerConnection) {
-    return (peerConnection === localPeerConnection) ? remotePeerConnection : localPeerConnection;
+/**
+ * Socket.io event listeners.
+ */
+if (room !== '') {
+    socket.emit('create or join', room);
 }
 
-// Gets the name of a certain peer connection.
-function getPeerName(peerConnection) {
-    return (peerConnection === localPeerConnection) ? 'localPeerConnection' : 'remotePeerConnection';
-}
+socket.on('created', (room) => {
+    isInitiator = true;
+});
 
-// ----------------------
-// SDP and Server loggers
-// ----------------------
+socket.on('join', (room) => {
+    isChannelReady = true;
+});
 
-// TODO: Implement server logger
+socket.on('joined', (room) => {
+    isChannelReady = true;
+});
+
+socket.on('full', (room) => {
+    console.log(`Room ${room} is full.`);
+});
+
+// Essence of long-polling on local and remote peers
+socket.on('message', (message) => {
+    if (message === 'got user media') {
+        maybeStart();
+    } else if (message.type === 'offer') {
+        if (!isInitiator && !isStarted) {
+            maybeStart();
+        }
+        localPeerConnection.setRemoteDescription(new RTCSessionDescription(message));
+        establishAnswer();
+    } else if (message.type === 'answer' && isStarted) {
+        localPeerConnection.setRemoteDescription(new RTCSessionDescription(message));
+    } else if (message.type === 'candidate' && isStarted) {
+        const candidate = new RTCIceCandidate({
+            sdpMLineIndex: message.label,
+            candidate: message.candidate,
+        });
+        localPeerConnection.addIceCandidate(candidate);
+    } else if (message === 'bye' && isStarted) {
+        handleRemoteHangup();
+    }
+});
+
+// TODO: Implement client logger
 // Logs an action (text) and the time when it happened on the console.
 function trace(text) {
     text = text.trim();
     const now = (window.performance.now() / 1000).toFixed(3);
-
     console.log(now, text);
 }
 
+/**
+ * Session Description Protocol (SDP) logging.
+ */
 function setDescriptionSuccess(peerConnection, functionName) {
     // const peerName = getPeerName(peerConnection);
     // trace(`${peerName} ${functionName} complete.`);
@@ -76,43 +114,60 @@ function setSessionDescriptionError(error) {
     // trace(`Failed to create session description: ${error.toString()}.`);
 }
 
-function handleConnectionSuccess(peerConnection) {
-    // trace(`${getPeerName(peerConnection)} addIceCandidate success.`);
-}
-
-function handleConnectionFailure(peerConnection, error) {
-    // trace(`${getPeerName(peerConnection)} failed to add ICE Candidate:\n` + `${error.toString()}.`);
-}
-
 function handleConnectionChange(event) {
-    const peerConnection = event.target;
+    // TODO: Implementation of ICE restart
+    // const peerConnection = event.target;
     // console.log('ICE state change event: ', event);
     // trace(`${getPeerName(peerConnection)} ICE state: ` + `${peerConnection.iceConnectionState}.`);
 }
 
-function handleConnection(event) {
-    const peerConnection = event.target;
+/**
+ * WebRTC connection handlers.
+ */
+function sendMessage(message) {
+    socket.emit('message', message);
+}
+
+function handleIceCandidate(event) {
     const iceCandidate = event.candidate;
-
     if (iceCandidate) {
-        const newIceCandidate = new RTCIceCandidate(iceCandidate);
-        const otherPeer = getOtherPeer(peerConnection);
-
-        otherPeer.addIceCandidate(newIceCandidate)
-            .then(() => {
-                handleConnectionSuccess(peerConnection);
-            })
-            .catch((error) => {
-                handleConnectionFailure(peerConnection, error);
-            });
+        sendMessage({
+            type: 'candidate',
+            label: event.candidate.sdpMLineIndex,
+            id: event.candidate.sdpMid,
+            candidate: event.candidate.candidate,
+        });
+    } else {
+        trace('End of candidates.');
     }
+}
+
+function maybeStart() {
+    if (!isStarted && typeof localStream !== 'undefined' && isChannelReady) {
+        establishCall();
+    }
+}
+
+function stop() {
+    isStarted = false;
+    localPeerConnection.close();
+    localPeerConnection = null;
+}
+
+function handleRemoteHangup() {
+    stop();
+    isInitiator = false;
 }
 
 // Local media stream handlers
 function gotLocalMediaStream(mediaStream) {
     status.innerText = 'Establishing call...';
-    localVideo.srcObject = mediaStream;
     localStream = mediaStream;
+    localVideo.srcObject = localStream;
+    sendMessage('got user media');
+    if (isInitiator) {
+        maybeStart();
+    }
 }
 
 function handleLocalMediaStreamError(error) {
@@ -120,45 +175,38 @@ function handleLocalMediaStreamError(error) {
 }
 
 // Remote media stream handler
-function gotRemoteMediaStream(event) {
+function handleRemoteMediaStream(event) {
     status.innerText = 'Connected';
-    const mediaStream = event.stream;
-    remoteVideo.srcObject = mediaStream;
+    const mediaStream = event.streams[0];
+    console.log(event);
+    console.log('Remote stream added');
     remoteStream = mediaStream;
+    console.log(remoteStream);
+    remoteVideo.srcObject = remoteStream;
+}
+
+function removeRemoteMediaStream(event) {
+    trace('Remote stream removed.');
 }
 
 // Remote peer created answer handler
-function createdAnswer(description) {
-    remotePeerConnection.setLocalDescription(description)
-        .then(() => {
-            setLocalDescriptionSuccess(remotePeerConnection);
-        })
-        .catch(setSessionDescriptionError);
-
-    localPeerConnection.setRemoteDescription(description)
+function createdAnswer(sessionDescription) {
+    localPeerConnection.setLocalDescription(sessionDescription)
         .then(() => {
             setRemoteDescriptionSuccess(localPeerConnection);
         })
         .catch(setSessionDescriptionError);
+    sendMessage(sessionDescription);
 }
 
 // Local peer created offer handler
-function createdOffer(description) {
-    localPeerConnection.setLocalDescription(description)
+function createdOffer(sessionDescription) {
+    localPeerConnection.setLocalDescription(sessionDescription)
         .then(() => {
             setLocalDescriptionSuccess(localPeerConnection);
         })
         .catch(setSessionDescriptionError);
-
-    remotePeerConnection.setRemoteDescription(description)
-        .then(() => {
-            setRemoteDescriptionSuccess(remotePeerConnection);
-        })
-        .catch(setSessionDescriptionError);
-
-    remotePeerConnection.createAnswer()
-        .then(createdAnswer)
-        .catch(setSessionDescriptionError);
+    sendMessage(sessionDescription);
 }
 
 function establishCall() {
@@ -167,23 +215,33 @@ function establishCall() {
     // const audioTracks = localStream.getAudioTracks();
     // TODO: Provide options to choose media devices
 
-    // STUN and TURN server config
+    // Public Google STUN server config
     const servers = null;
 
     // Local peer connection and behaviour
-    localPeerConnection = new RTCPeerConnection(servers);
-    localPeerConnection.addEventListener('icecandidate', handleConnection);
-    localPeerConnection.addEventListener('iceconnectionstatechange', handleConnectionChange);
+    try {
+        localPeerConnection = new RTCPeerConnection(servers);
+        localPeerConnection.onicecandidate = handleIceCandidate;
+        localPeerConnection.oniceconnectionstatechange = handleConnectionChange;
+        localPeerConnection.ontrack = handleRemoteMediaStream;
+        localPeerConnection.onremovetrack = removeRemoteMediaStream;
+    } catch (error) {
+        trace(`RTCPeerConnection creation error: ${error}`);
+        alert('Could not create RTCPeerConnection. Try again later.');
+    }
     localPeerConnection.addStream(localStream);
-    localPeerConnection.createOffer(offerOptions)
-        .then(createdOffer)
-        .catch(setSessionDescriptionError);
+    isStarted = true;
+    if (isInitiator) {
+        localPeerConnection.createOffer(offerOptions)
+            .then(createdOffer)
+            .catch(setSessionDescriptionError);
+    }
+}
 
-    // Remote peer connection and behaviour
-    remotePeerConnection = new RTCPeerConnection(servers);
-    remotePeerConnection.addEventListener('icecandidate', handleConnection);
-    remotePeerConnection.addEventListener('iceconnectionstatechange', handleConnectionChange);
-    remotePeerConnection.addEventListener('addstream', gotRemoteMediaStream, 1000);
+function establishAnswer() {
+    localPeerConnection.createAnswer()
+        .then(createdAnswer)
+        .catch(setSessionDescriptionError);
 }
 
 async function initiateCall() {

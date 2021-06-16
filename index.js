@@ -6,6 +6,8 @@ const path = require('path');
 const passport = require('passport');
 const PassportLocalStrategy = require('passport-local');
 const session = require('express-session');
+const socketIO = require('socket.io');
+const http = require('http');
 const ExpressError = require('./utils/ExpressError');
 const { isLoggedIn } = require('./middlewares/isLoggedIn');
 const User = require('./models/user');
@@ -53,6 +55,10 @@ passport.use(new PassportLocalStrategy(User.authenticate()));
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
+// Server configuration
+const server = http.createServer(app);
+const io = socketIO(server);
+
 // Required in implementation of isLoggedIn middleware
 app.use((req, res, next) => {
     res.locals.currentUser = req.user;
@@ -77,6 +83,43 @@ app.use((err, req, res, next) => {
     res.status(err.statusCode).render('error', { err });
 });
 
-app.listen(3000, () => {
+// app.listen(3000, () => {
+//     console.log('Serving on Port 3000');
+// });
+
+io.sockets.on('connection', (socket) => {
+    socket.on('message', (message) => {
+        // for a real app, would be room-only (not broadcast)
+        socket.broadcast.emit('message', message);
+    });
+
+    socket.on('create or join', (room) => {
+        // log('Received request to create or join room ' + room);
+
+        const clientsInRoom = io.sockets.adapter.rooms[room];
+        const numClients = clientsInRoom ? Object.keys(clientsInRoom.sockets).length : 0;
+        // log('Room ' + room + ' now has ' + numClients + ' client(s)');
+
+        if (numClients === 0) {
+            socket.join(room);
+            // log('Client ID ' + socket.id + ' created room ' + room);
+            socket.emit('created', room, socket.id);
+        } else if (numClients === 1) {
+            // log('Client ID ' + socket.id + ' joined room ' + room);
+            io.sockets.in(room).emit('join', room);
+            socket.join(room);
+            socket.emit('joined', room, socket.id);
+            io.sockets.in(room).emit('ready');
+        } else { // max two clients
+            socket.emit('full', room);
+        }
+    });
+
+    socket.on('bye', () => {
+        console.log('received bye');
+    });
+});
+
+server.listen(3000, () => {
     console.log('Serving on Port 3000');
 });
