@@ -7,12 +7,15 @@ Making contributing to this project is as easy and transparent as possible, whet
 - Becoming a maintainer.
 
 
+**Working on your first Pull Request?** You can learn how from this *free* series [How to Contribute to an Open Source Project on GitHub](https://kcd.im/pull-request).
+
+
 ## Development Process
-We chose the *shared repository model* ([read more](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-collaborative-development-models)). Contributors are invited to push changes by creating topic branches. Pull requests are later required to be raised for these changes <a href="https://github.com/dhruvshettty/homely-surveillance/pulls">here</a> for code review and general discussions, and after review, these can be merged into the main repository.
+We chose the [shared repository model](https://docs.github.com/en/github/collaborating-with-issues-and-pull-requests/about-collaborative-development-models). Contributors are invited to push changes by creating topic branches. Pull requests are later required to be raised for these changes <a href="https://github.com/dhruvshettty/homely-surveillance/pulls">here</a> for code review and general discussions, and after review, these can be merged into the main repository.
 
 
 ## Using the Project's Standard Commit Messages
-This project is using the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) standard. Various Tooling for Conventional Commits can be found <a href="https://www.conventionalcommits.org/en/v1.0.0/#tooling-for-conventional-commits">here</a>. Considering the project stack, we suggest: [Node.js Tool](https://github.com/commitizen/cz-cli) and [VSCode Tool](https://marketplace.visualstudio.com/items?itemName=vivaxy.vscode-conventional-commits). 
+This project is using the [conventional commits](https://www.conventionalcommits.org/en/v1.0.0/) standard. Various Tooling for Conventional Commits can be found <a href="https://www.conventionalcommits.org/en/v1.0.0/#tooling-for-conventional-commits">here</a>. Considering the project stack, we suggest: [Node.js Tool](https://github.com/commitizen/cz-cli) or [VSCode Tool](https://marketplace.visualstudio.com/items?itemName=vivaxy.vscode-conventional-commits). 
 
 
 ## Using the Airbnb JavaSript Style Guide
