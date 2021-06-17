@@ -54,7 +54,7 @@ async function recognizeFaces() {
                 drawBox.draw(canvas)
                 setTimeout(() => {
                     if(result.label == "unknown") {
-                        document.location = "http://localhost:3000/verification/alert-owner"
+                        document.location = "http://localhost:3000/verification/owner-verify"
                     } else {
                         document.location = "http://localhost:3000/verification/success"
                     }
