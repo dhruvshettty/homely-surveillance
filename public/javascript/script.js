@@ -9,7 +9,7 @@ Promise.all([
 function start() {
     document.body.append('Models Loaded')
 
-    navigator.getUserMedia(
+    navigator.mediaDevices.getUserMedia(
         { video:{} },
         stream => video.srcObject = stream,
         err => console.error(err)
