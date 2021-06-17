@@ -50,7 +50,15 @@ async function recognizeFaces() {
             results.forEach( (result, i) => {
                 const box = resizedDetections[i].detection.box
                 const drawBox = new faceapi.draw.DrawBox(box, { label: result.toString() })
+                console.log(result)
                 drawBox.draw(canvas)
+                setTimeout(() => {
+                    if(result.label == "unknown") {
+                        document.location = "http://localhost:3000/verification/alert-owner"
+                    } else {
+                        document.location = "http://localhost:3000/verification/success"
+                    }
+                },3000)
             })
         }, 100)
 
