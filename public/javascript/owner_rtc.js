@@ -86,7 +86,6 @@ socket.on('message', (message) => {
     }
 });
 
-// TODO: Implement client logger
 // Logs an action (text) and the time when it happened on the console.
 function trace(text) {
     text = text.trim();
@@ -98,8 +97,7 @@ function trace(text) {
  * Session Description Protocol (SDP) logging.
  */
 function setDescriptionSuccess(peerConnection, functionName) {
-    // const peerName = getPeerName(peerConnection);
-    // trace(`${peerName} ${functionName} complete.`);
+    trace(`${functionName} complete.`);
 }
 
 function setLocalDescriptionSuccess(peerConnection) {
@@ -111,14 +109,14 @@ function setRemoteDescriptionSuccess(peerConnection) {
 }
 
 function setSessionDescriptionError(error) {
-    // trace(`Failed to create session description: ${error.toString()}.`);
+    trace(`Failed to create session description: ${error.toString()}.`);
 }
 
 function handleConnectionChange(event) {
     // TODO: Implementation of ICE restart
     // const peerConnection = event.target;
     // console.log('ICE state change event: ', event);
-    // trace(`${getPeerName(peerConnection)} ICE state: ` + `${peerConnection.iceConnectionState}.`);
+    trace('ICE state changed.');
 }
 
 /**
@@ -130,6 +128,8 @@ function sendMessage(message) {
 
 function handleIceCandidate(event) {
     const iceCandidate = event.candidate;
+    trace('New ICE candidate: ');
+    console.log(iceCandidate);
     if (iceCandidate) {
         sendMessage({
             type: 'candidate',
@@ -149,6 +149,7 @@ function maybeStart() {
 }
 
 function stop() {
+    trace('Shutting down connection...');
     isStarted = false;
     localPeerConnection.close();
     localPeerConnection = null;
@@ -164,6 +165,7 @@ function gotLocalMediaStream(mediaStream) {
     status.innerText = 'Establishing call...';
     localStream = mediaStream;
     localVideo.srcObject = localStream;
+    trace(`Got local stream from: ${localStream.getVideoTracks()[0].label}`);
     sendMessage('got user media');
     if (isInitiator) {
         maybeStart();
@@ -171,18 +173,18 @@ function gotLocalMediaStream(mediaStream) {
 }
 
 function handleLocalMediaStreamError(error) {
+    trace(`Error: ${error.toString()}`);
     status.innerText = `${error.toString()}. Fix error and retry`;
 }
 
 // Remote media stream handler
 function handleRemoteMediaStream(event) {
+    trace('Getting remote video stream...');
     status.innerText = 'Connected';
     const mediaStream = event.streams[0];
-    console.log(event);
-    console.log('Remote stream added');
     remoteStream = mediaStream;
-    console.log(remoteStream);
     remoteVideo.srcObject = remoteStream;
+    trace('Got remote video stream');
 }
 
 function removeRemoteMediaStream(event) {
@@ -191,6 +193,8 @@ function removeRemoteMediaStream(event) {
 
 // Remote peer created answer handler
 function createdAnswer(sessionDescription) {
+    trace('Creating answer: ');
+    console.log(sessionDescription);
     localPeerConnection.setLocalDescription(sessionDescription)
         .then(() => {
             setRemoteDescriptionSuccess(localPeerConnection);
@@ -201,6 +205,8 @@ function createdAnswer(sessionDescription) {
 
 // Local peer created offer handler
 function createdOffer(sessionDescription) {
+    trace('Creating offer: ');
+    console.log(sessionDescription);
     localPeerConnection.setLocalDescription(sessionDescription)
         .then(() => {
             setLocalDescriptionSuccess(localPeerConnection);
@@ -225,6 +231,7 @@ function establishCall() {
         localPeerConnection.oniceconnectionstatechange = handleConnectionChange;
         localPeerConnection.ontrack = handleRemoteMediaStream;
         localPeerConnection.onremovetrack = removeRemoteMediaStream;
+        trace('Created RTCPeerConnection.');
     } catch (error) {
         trace(`RTCPeerConnection creation error: ${error}`);
         alert('Could not create RTCPeerConnection. Try again later.');
@@ -251,4 +258,5 @@ async function initiateCall() {
     setTimeout(establishCall, 2000);
 }
 
+trace('Initiating call...');
 setTimeout(initiateCall, 2000);
