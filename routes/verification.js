@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 
 router.get('/', (req, res) => {
-    res.send('This should be the face-api verification page');
+    res.render('verify');
 });
 
 router.get('/success', (req, res) => {
