@@ -9,8 +9,8 @@ Promise.all([
 function start() {
     document.body.append('Models Loaded')
 
-    navigator.mediaDevices.getUserMedia(
-        { video:{} },
+    navigator.getUserMedia(
+        { video: {} },
         stream => video.srcObject = stream,
         err => console.error(err)
     )
@@ -47,18 +47,18 @@ async function recognizeFaces() {
             const results = resizedDetections.map((d) => {
                 return faceMatcher.findBestMatch(d.descriptor)
             })
-            results.forEach( (result, i) => {
+            results.forEach((result, i) => {
                 const box = resizedDetections[i].detection.box
                 const drawBox = new faceapi.draw.DrawBox(box, { label: result.toString() })
                 console.log(result)
                 drawBox.draw(canvas)
                 setTimeout(() => {
-                    if(result.label == "unknown") {
+                    if (result.label == "unknown") {
                         document.location = "http://localhost:3000/verification/owner-verify"
                     } else {
                         document.location = "http://localhost:3000/verification/success"
                     }
-                },3000)
+                }, 3000)
             })
         }, 100)
 
@@ -70,12 +70,12 @@ async function recognizeFaces() {
 
 function loadLabeledImages() {
     //const labels = ['Black Widow', 'Captain America', 'Hawkeye' , 'Jim Rhodes', 'Tony Stark', 'Thor', 'Captain Marvel']
-    const labels = ['Yathin_SP'] // for WebCam
+    const labels = ['Dhruv'] // for WebCam
     return Promise.all(
-        labels.map(async (label)=>{
+        labels.map(async (label) => {
             const descriptions = []
             const score = []
-            for(let i=1; i<=4; i++) {
+            for (let i = 1; i <= 4; i++) {
                 const img = await faceapi.fetchImage(`../labeled_images/${label}/${i}.jpg`)
                 const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor()
                 //console.log(label + "  " + i + "  " + JSON.stringify(detections))

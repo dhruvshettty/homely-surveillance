@@ -150,4 +150,8 @@ temp/
 !.vscode/extensions.json
 *.code-workspace
 
+### Project Specific ###
+# Labelled images directory
+labeled_images/
+
 # End of https://www.toptal.com/developers/gitignore/api/vscode,node,linux

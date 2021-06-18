@@ -39,6 +39,7 @@ const offerOptions = {
 const status = document.querySelector('#status');
 const localVideo = document.querySelector('#localVideo');
 const remoteVideo = document.querySelector('#remoteVideo');
+const form = document.querySelector('#ownerResponse');
 
 /**
  * Socket.io event listeners.
@@ -63,6 +64,18 @@ socket.on('full', (room) => {
     console.log(`Room ${room} is full.`);
 });
 
+socket.on('owner response', (res) => {
+    socket.emit('redirect', res);
+});
+
+socket.on('redirect', (res) => {
+    if (res === 'allowed') {
+        window.location.href = 'http://localhost:3000/verification/success';
+    } else if (res === 'denied') {
+        window.location.href = 'http://localhost:3000/verification/failed';
+    }
+});
+
 // Essence of long-polling on local and remote peers
 socket.on('message', (message) => {
     if (message === 'got user media') {
@@ -83,6 +96,11 @@ socket.on('message', (message) => {
         localPeerConnection.addIceCandidate(candidate);
     } else if (message === 'bye' && isStarted) {
         handleRemoteHangup();
+    } else if (message === 'allow') {
+        console.log("I'm hitting this endpoint");
+        document.location = 'http://localhost:3000/verification/success';
+    } else if (message === 'deny') {
+        document.location = 'http://localhost:3000/verification/fail';
     }
 });
 
@@ -158,6 +176,12 @@ function stop() {
 function handleRemoteHangup() {
     stop();
     isInitiator = false;
+}
+
+function ownerResponse(event) {
+    event.preventDefault();
+    const res = event.submitter.name;
+    socket.emit('owner response', res);
 }
 
 // Local media stream handlers
@@ -256,6 +280,10 @@ async function initiateCall() {
         .then(gotLocalMediaStream)
         .catch(handleLocalMediaStreamError);
     setTimeout(establishCall, 2000);
+}
+
+if (form) {
+    form.onsubmit = ownerResponse;
 }
 
 trace('Initiating call...');

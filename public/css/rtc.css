@@ -1,5 +1,58 @@
 video {
     max-width: 50%;
-    width: 120px;
-  }
+    width: 360px;
+}
   
+.btn-accept {
+  outline: none;
+  border: none;
+  cursor: pointer;
+  display: block;
+  position: relative;
+  background-color: #4fa11f;
+  font-size: 16px;
+  font-weight: 300px;
+  color: white;
+  letter-spacing: 2px;
+  padding: 20px 70px;
+  margin: 0 auto;
+  box-shadow: 0 6px #387a11;
+  width: 16%;
+}
+  
+.btn-accept:hover {
+  box-shadow: 0 4px #4fa11f;
+  top: 2px;
+}
+
+.btn-accept:active {
+  box-shadow: 0 0 #4fa11f;
+  top: 6px;
+}
+
+.btn-deny {
+  outline: none;
+  border: none;
+  cursor: pointer;
+  display: block;
+  position: relative;
+  background-color: #d13e3e;
+  font-size: 16px;
+  font-weight: 300px;
+  color: white;
+  letter-spacing: 2px;
+  padding: 20px 70px;
+  margin: 0 auto;
+  box-shadow: 0 6px #a52424;
+  width: 16%;
+}
+  
+.btn-deny:hover {
+  box-shadow: 0 4px #a52424;
+  top: 2px;
+}
+
+.btn-deny:active {
+  box-shadow: 0 0 #a52424;
+  top: 6px;
+}

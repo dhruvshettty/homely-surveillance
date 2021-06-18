@@ -1,4 +1,4 @@
-.btn {
+.btn-ring {
 	outline: none;
 	border: none;
 	cursor: pointer;
@@ -13,14 +13,24 @@
 	margin: 0 auto;
 	box-shadow: 0 6px #78b4b3;
 	width: 16%;
-  }
+}
   
-  .btn:hover {
+.btn-ring:hover {
 	box-shadow: 0 4px #78b4b3;
 	top: 2px;
-  }
+}
   
-  .btn:active {
+.btn-ring:active {
 	box-shadow: 0 0 #78b4b3;
 	top: 6px;
-  }
+}
+
+#failed {
+	background-color: #be4747;
+	color: white;
+}
+
+#success {
+	background-color: #7bac5e;
+	color: white;
+}

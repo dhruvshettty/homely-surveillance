@@ -10,6 +10,10 @@ router.get('/success', (req, res) => {
     res.render('success');
 });
 
+router.get('/failed', (req, res) => {
+    res.render('failed');
+});
+
 router.get('/owner-verify', (req, res) => {
     res.render('owner_rtc');
 });

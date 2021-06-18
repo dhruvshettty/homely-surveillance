@@ -23,7 +23,20 @@
                 </div>
                 <video id="localVideo" autoplay playsinline></video>
                 <video id="remoteVideo" autoplay playsinline></video>
-            </div>
+                <% if(currentUser) { %>
+                    <form id="ownerResponse">
+                        <div class="row">
+                            <div class="col-md-12 text-center">
+                                <button class="btn-accept" name="allowed" value="allowed">Allow</button>
+                            </div>
+                        </div>
+                        <div class="row mt-5">
+                            <div class="col-md-12 text-center">
+                                <button class="btn-deny" name="denied" value="denied">Deny</button>
+                            </div>
+                        </div>
+                    </form>
+                    <% } %>
         </main>
         <%- include('partials/footer') %>
             <script src="/socket.io/socket.io.js"></script>

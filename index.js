@@ -111,6 +111,15 @@ io.sockets.on('connection', (socket) => {
         }
     });
 
+    socket.on('owner response', (res) => {
+        console.log(`Client ${socket.id} ${res} the guest`);
+        socket.emit('owner response', res);
+    });
+
+    socket.on('redirect', (res) => {
+        socket.broadcast.emit('redirect', res);
+    });
+
     socket.on('bye', () => {
         console.log('received bye');
     });
